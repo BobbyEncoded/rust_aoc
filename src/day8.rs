@@ -1,12 +1,8 @@
+use std::collections::HashSet;
+
 #[derive(Clone)]
 struct Segment {
-	a: bool,
-	b: bool,
-	c: bool,
-	d: bool,
-	e: bool,
-	f: bool,
-	g: bool,
+	segments: HashSet<char>,
 	digit: Option<u8>,
 }
 
@@ -41,14 +37,8 @@ fn parse (initial_contents : &String) -> Vec<DigitLine> {
 	}
 
 	fn convert_segment_strings_into_segments (segment_to_convert : &str) -> Segment {
-		let a = segment_to_convert.contains('a');
-		let b = segment_to_convert.contains('b');
-		let c = segment_to_convert.contains('c');
-		let d = segment_to_convert.contains('d');
-		let e = segment_to_convert.contains('e');
-		let f = segment_to_convert.contains('f');
-		let g = segment_to_convert.contains('g');
-		Segment {a, b, c, d, e, f, g, digit: None}
+		let set : HashSet<char> = segment_to_convert.chars().collect();
+		Segment {segments: set, digit: None}
 	}
 
 	let initial_segment_map = || SegmentMap{a: None, b: None, c: None, d: None, e: None, f: None, g:None};
@@ -65,26 +55,21 @@ fn parse (initial_contents : &String) -> Vec<DigitLine> {
 }
 
 fn count_valid_segments (input_segment: &Segment) -> i32 {
-			input_segment.a as i32 + 
-			input_segment.b as i32 +
-			input_segment.c as i32 +
-			input_segment.d as i32 +
-			input_segment.e as i32 +
-			input_segment.f as i32 +
-			input_segment.g as i32
+		input_segment.segments.len() as i32
 		}
+
+fn find_segment_with_digit (segments : &Vec<Segment>, digit : u8) -> Option<&Segment> {
+		segments.iter().find(|x| x.digit == Some(digit))
+}
+
+fn check_if_segments_are_equal (first_segment: &Segment, second_segment: &Segment) -> bool {
+	first_segment.segments.symmetric_difference(&second_segment.segments).count() != 0
+}
 
 fn _part1 (digitlines: Vec<DigitLine>) -> i32 {
 	fn count_valid_nums (input_segments: &Vec<Segment>) -> i32 {
 		fn count_part1_valid_segments (input_segment: &Segment) -> i32 {
-			let segments = 
-				input_segment.a as i32 + 
-				input_segment.b as i32 +
-				input_segment.c as i32 +
-				input_segment.d as i32 +
-				input_segment.e as i32 +
-				input_segment.f as i32 +
-				input_segment.g as i32;
+			let segments = count_valid_segments(input_segment); 
 			if segments == 2 || segments == 3 || segments == 4 || segments == 7 {1} else {0}
 		}
 		input_segments.iter().map(|x| count_part1_valid_segments(x)).sum()
@@ -101,7 +86,7 @@ fn part2 (digitlines: Vec<DigitLine>) -> i32 {
 
 		fn find_all_segments (input_segment_map : &mut SegmentMap, input_digits : &mut Vec<Segment>) {
 			//Convert input digits into the first 4 digits
-			for segment in input_digits {
+			for segment in &mut *input_digits {
 				let seg_count = count_valid_segments(segment);
 				if seg_count == 2 {
 					segment.digit = Some(1);
@@ -113,7 +98,11 @@ fn part2 (digitlines: Vec<DigitLine>) -> i32 {
 					segment.digit = Some(8);
 				}
 			}
-
+			//We should now have the initial segments.  We will then need to find the segment which stands for a, or the top middle, and map it.
+			let seg_1 = find_segment_with_digit(&input_digits, 1u8).unwrap();
+			let seg_7 = find_segment_with_digit(&input_digits, 7u8).unwrap();
+			let seg_true_a = &seg_1.segments.difference(&seg_7.segments).collect::<Vec<&char>>()[0];
+			input_segment_map.a = Some(**seg_true_a); //Get the first character segment, which stands for segment A.
 		}
 		unimplemented!()
 	}
@@ -126,6 +115,19 @@ fn part2 (digitlines: Vec<DigitLine>) -> i32 {
 
 pub fn run (initial_contents : &String) -> String {
 	let initial_ints = parse(initial_contents);
-	format!("{}",part2(initial_ints))
+	format!("{}",_part1(initial_ints))
 }
 
+// 1
+// 7
+// 4
+// 8
+// 
+// 6 is the only 6 segment which shares NO segments with 1.
+// 3 is the only 5 segment which has all of 1's segments.
+// 
+// 5 is a subset of 6, while
+// 2 is not.
+// 
+// 9 is a superset of 5, while
+// 0 is not.
