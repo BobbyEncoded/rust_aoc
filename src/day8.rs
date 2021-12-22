@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Segment {
 	segments: HashSet<char>,
 	digit: Option<u8>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct SegmentMap {
 	a: Option<char>,
 	b: Option<char>,
@@ -17,7 +17,7 @@ struct SegmentMap {
 	g: Option<char>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct DigitLine {
 	all_digits: Vec<Segment>,
 	answer_digits: Vec<Segment>,
@@ -62,8 +62,13 @@ fn find_segment_with_digit (segments : &Vec<Segment>, digit : u8) -> Option<&Seg
 		segments.iter().find(|x| x.digit == Some(digit))
 }
 
-fn check_if_segments_are_equal (first_segment: &Segment, second_segment: &Segment) -> bool {
-	first_segment.segments.symmetric_difference(&second_segment.segments).count() != 0
+fn get_digits_by_segment_count (input_digits : &Vec<Segment>, segment_count : i32) -> Vec<Segment> {
+	let vectors = input_digits.iter().filter(|&x| (count_valid_segments(x) == segment_count) && (x.digit == None)).collect::<Vec<&Segment>>();
+	let mut new_vector = Vec::new();
+	for vector in vectors {
+		new_vector.push(vector.clone());
+	}
+	new_vector
 }
 
 fn _part1 (digitlines: Vec<DigitLine>) -> i32 {
@@ -101,10 +106,58 @@ fn part2 (digitlines: Vec<DigitLine>) -> i32 {
 			//We should now have the initial segments.  We will then need to find the segment which stands for a, or the top middle, and map it.
 			let seg_1 = find_segment_with_digit(&input_digits, 1u8).unwrap();
 			let seg_7 = find_segment_with_digit(&input_digits, 7u8).unwrap();
-			let seg_true_a = &seg_1.segments.difference(&seg_7.segments).collect::<Vec<&char>>()[0];
+			let seg_true_a = &seg_1.segments.symmetric_difference(&seg_7.segments).collect::<Vec<&char>>()[0];
 			input_segment_map.a = Some(**seg_true_a); //Get the first character segment, which stands for segment A.
+			let six_segs = get_digits_by_segment_count(&input_digits, 6);
+			let seg_6 = six_segs.iter().find(|&x| x.segments.intersection(&seg_1.segments).collect::<HashSet<&char>>().len() == 1).expect("Could not find segment 6");
+			let five_segs = get_digits_by_segment_count(&input_digits, 5);
+			let seg_3 = five_segs.iter().find(|&x| x.segments.is_superset(&seg_1.segments)).expect("Could not find segment 3");
+			//Update input_digits with 6 and 3
+			for segment in &mut *input_digits {
+				if segment.segments == seg_6.segments {
+					segment.digit = Some(6);
+				} else if segment.segments == seg_3.segments {
+					segment.digit = Some(3);
+				}
+			}
+			let five_and_two = get_digits_by_segment_count(&input_digits, 5);
+			let seg_5 = five_and_two.iter().find(|&x| x.segments.is_subset(&find_segment_with_digit(&input_digits, 6).expect("Could not find segment 6").segments)).expect("Could not find segment 5");
+			let seg_2 = five_and_two.iter().find(|&x| x.segments != seg_5.segments).expect("Could not find segment 2");
+			//Update input_digits with 5 and 2
+			for segment in &mut *input_digits {
+				if segment.segments == seg_5.segments {
+					segment.digit = Some(5);
+				} else if segment.segments == seg_2.segments {
+					segment.digit = Some(2);
+				}
+			}
+			let nine_and_zero = get_digits_by_segment_count(&input_digits, 6);
+			let seg_9 = nine_and_zero.iter().find(|&x| x.segments.is_superset(&find_segment_with_digit(&input_digits, 5).expect("Could not find segment 5").segments)).expect("Could not find segment 9");
+			let seg_0 = nine_and_zero.iter().find(|&x| x.segments != seg_9.segments).expect("Could not find segment 0");
+			for segment in &mut *input_digits {
+				if segment.segments == seg_9.segments {
+					segment.digit = Some(9);
+				} else if segment.segments == seg_0.segments {
+					segment.digit = Some(0);
+				}
+			}
+			for seg in input_digits {
+				println!("{:?}",seg);
+			}
+			println!("Next segment");
 		}
-		unimplemented!()
+
+		find_all_segments(segment_map, all_digits);
+		
+		//Find the answer segments
+		for segment in &mut *ans_digits {
+			let matching_segment = all_digits.iter().find(|x| x.segments == segment.segments).expect("No match found");
+			segment.digit = Some(matching_segment.digit.expect("Matching digit did not have a number"));
+		}
+
+		let ans_num = ans_digits.iter().fold(0, |val, x|  val * 10 + (x.digit.expect("Did not find a digit in answers") as i32));
+		println!("Ans_Nums: {:?} \n Sum: {:?}", ans_digits, ans_num);
+		ans_num
 	}
 
 	digitlines
@@ -115,7 +168,7 @@ fn part2 (digitlines: Vec<DigitLine>) -> i32 {
 
 pub fn run (initial_contents : &String) -> String {
 	let initial_ints = parse(initial_contents);
-	format!("{}",_part1(initial_ints))
+	format!("{}",part2(initial_ints))
 }
 
 // 1
