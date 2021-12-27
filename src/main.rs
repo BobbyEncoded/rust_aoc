@@ -3,7 +3,7 @@ mod day7;
 mod day8;
 mod day9;
 
-const TESTFILENAME : &str = "Advent2021D9Test.txt";
+const TESTFILENAME : &str = "Advent2021D9.txt";
 
 fn main() {
     let file_contents = general::pull_file_contents(std::path::Path::new(TESTFILENAME));

@@ -38,18 +38,18 @@ pub fn part1 (mut input_map : HashMap<(i32, i32), u32>) -> u32 {
             maxy = *y;
         };
     }
-    for n in minx-1..maxx+1 {
+    for n in minx-1..=maxx+1 {
         input_map.insert((n, miny-1), 10);
         input_map.insert((n, maxy+1), 10);
     }
-    for n in miny..maxy {
+    for n in miny..=maxy {
         input_map.insert((minx-1, n), 10);
         input_map.insert((maxx+1, n), 10);
     }
     //The input map should now be prepared for searching.
     let mut sum = 0u32;
-    for x in minx..maxx {
-        for y in miny..maxy {
+    for x in minx..=maxx {
+        for y in miny..=maxy {
             let top =
                 match &input_map.entry((x, y + 1)) {
                 Occupied(entry) => entry.get().clone(),
