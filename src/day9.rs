@@ -86,6 +86,74 @@ pub fn part1 (mut input_map : HashMap<(i32, i32), u32>) -> u32 {
     sum
 }
 
+pub fn part2 (mut input_map : HashMap<(i32, i32), u32>) -> () {
+    //Convert input_map to more suitable format for finding basins.
+
+    let (mut minx, mut miny, mut maxx, mut maxy) = (std::i32::MAX, std::i32::MAX, std::i32::MIN, std::i32::MIN);
+    for keyval in &mut input_map {
+        let ((x, y), _) = keyval;
+        if x < &minx {
+            minx = *x;
+        };
+        if x > &maxx {
+            maxx = *x;
+        };
+        if y < &miny {
+            miny = *y;
+        };
+        if y > &maxy {
+            maxy = *y;
+        };
+    }
+    for n in minx-1..=maxx+1 {
+        input_map.insert((n, miny-1), 10);
+        input_map.insert((n, maxy+1), 10);
+    }
+    for n in miny..=maxy {
+        input_map.insert((minx-1, n), 10);
+        input_map.insert((maxx+1, n), 10);
+    }
+    //Create the basin map based off the input map.
+    let mut basin_map : HashMap<(i32, i32), (u32, u32)> = input_map.iter().map(|((x, y), val)| ((*x, *y), (*val, 0u32))).collect();
+    //The input map should now be prepared for searching.
+    let mut sum = 0u32;
+    for x in minx..=maxx {
+        for y in miny..=maxy {
+            let top =
+                match &basin_map.entry((x, y + 1)) {
+                Occupied(entry) => entry.get().clone(),
+                Vacant(_) => unimplemented!(),
+                };
+            let bot =
+                match &basin_map.entry((x, y - 1)) {
+                Occupied(entry) => entry.get().clone(),
+                Vacant(_) => unimplemented!(),
+                };
+            let right =
+                match &basin_map.entry((x + 1, y)) {
+                Occupied(entry) => entry.get().clone(),
+                Vacant(_) => unimplemented!(),
+                };
+            let left =
+                match &basin_map.entry((x - 1, y)) {
+                Occupied(entry) => entry.get().clone(),
+                Vacant(_) => unimplemented!(),
+                };
+            let cur_val =
+                match &basin_map.entry((x, y)) {
+                Occupied(entry) => entry.get().clone(),
+                Vacant(_) => unimplemented!(),
+                };
+            if cur_val < top && cur_val < bot && cur_val < right && cur_val < left {
+                sum = sum + cur_val + 1;
+            }
+            else {
+                continue;
+            }
+        }
+    }
+}
+
 pub fn run (initial_contents : &String) -> String {
     let initial_map = parse(initial_contents);
     format!("{}",part1(initial_map))
